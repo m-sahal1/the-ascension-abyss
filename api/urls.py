@@ -1,14 +1,45 @@
 from django.contrib import admin
 from django.urls import path, include
-from . import views
+from .views import *
+
+
 urlpatterns = [
-    path('', views.getOverview, name='get-overview'),
-    path('all/', views.getData, name='get-data'),
-    path('init/', views.initialize_elevators, name='initialize-elevators'),
-    path('requests/<str:pk>', views.get_elevator_requests, name='elevator-requests'),
-    path('next-destination/<str:pk>', views.get_next_destination, name='next-destination'),
-    path('status/<str:pk>', views.get_elevator_direction, name='elevator-status'),
-    path('add-requests/<str:pk>', views.save_user_request, name='add-requests'),
-    path('maintenance/<str:pk>', views.mark_elevator_maintenance, name='mark-maintenance'),
-    path('door/<str:pk>', views.open_close_door, name='door'),
+    # View all the elevator systems
+    path("sys/all", ElevatorSystemList.as_view(), name="el-sys-list"),
+    # Create new elevator systems
+    path("sys/add-new/", CreateElevatorSystem.as_view(), name="add-new-els"),
+    # List all the elevators under an elevator system
+    path("elevator/<int:id>/", ElevatorsList.as_view(), name="elevator-list"),
+    # single elevator
+    # view
+    path(
+        "system/<int:id>/elevator/<int:pk>/view/",
+        ViewSingleElevator.as_view(),
+        name="elevator-view",
+    ),
+    # update
+    path(
+        "system/<int:id>/elevator/<int:pk>/update/",
+        UpdateSingleElevator.as_view(),
+        name="elevator-update",
+    ),
+    # Fetch destination
+    path(
+        "system/<int:id>/elevator/<int:pk>/destination/",
+        FetchDestination.as_view(),
+        name="fetch-destination",
+    ),
+    # Request to an elevator
+    # create
+    path(
+        "system/<int:id>/elevator/<int:pk>/req/add-new/",
+        CreateElevatorRequest.as_view(),
+        name="add-new-req",
+    ),
+    # view
+    path(
+        "system/<int:id>/elevator/<int:pk>/req/view/",
+        ElevatorRequestList.as_view(),
+        name="req-list",
+    ),
 ]
