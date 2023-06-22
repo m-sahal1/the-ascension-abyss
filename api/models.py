@@ -14,7 +14,7 @@ class Elevator(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="idle")
     current_floor = models.PositiveIntegerField(default=0)
     destination_floor = models.PositiveIntegerField(null=True)
-    door = models.CharField(max_length=20, choices=DOOR_STATUS, default="close")
+    door = models.CharField(max_length=5, choices=DOOR_STATUS, default="close")
     requests = models.ManyToManyField(
         "FloorRequest", blank=True
     )  # , null=True , on_delete=models.SET_NULL)
