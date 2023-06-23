@@ -19,15 +19,15 @@ def getOverview(request):
     """
     api_urls = {
         "View all elevator systems": "system/all",
-        "Initialise_the new_elevator_system": "system/add-new/",
-        "List all the elevators under an elevator system": "system/<int:id>/",
-        "single elevator: view": "system/<int:id>/elevator/<int:pk>/view/",
-        "single elevator: update": "system/<int:id>/elevator/<int:pk>/update/",
-        "single elevator: fetch destination": "system/<int:id>/elevator/<int:pk>/destination/",
-        "Request to an elevator: create": "system/<int:id>/elevator/<int:pk>/req/add-new/",
-        "Request to an elevator: view": "system/<int:id>/elevator/<int:pk>/req/view/",
-        "Mark an elevator for maintenance":"system/<int:sys>/elevator/<int:pk>/maintenance/",
-        "Open/Close doors of an elevator":"system/<int:sys>/elevator/<int:pk>/doors/"
+        "Initialise_the new_elevator_system": "api/system/add-new/",
+        "List all the elevators under an elevator system": "api/system/<int:id>/",
+        "single elevator: view": "api/system/<int:id>/elevator/<int:pk>/view/",
+        "single elevator: update": "api/system/<int:id>/elevator/<int:pk>/update/",
+        "single elevator: fetch destination": "api/system/<int:id>/elevator/<int:pk>/destination/",
+        "Request to an elevator: create": "api/system/<int:id>/elevator/<int:pk>/req/add-new/",
+        "Request to an elevator: view": "api/system/<int:id>/elevator/<int:pk>/req/view/",
+        "Mark an elevator for maintenance":"api/system/<int:sys>/elevator/<int:pk>/maintenance/",
+        "Open/Close doors of an elevator":"api/system/<int:sys>/elevator/<int:pk>/doors/"
     }
     return Response(api_urls)
 
@@ -61,7 +61,7 @@ class CreateElevatorSystem(generics.CreateAPIView):
 
 class MaintenanceViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["patch"])
-    def mark_elevator_maintenance(self, request, pk=None):
+    def mark_elevator_maintenance(self, request, sys, pk):
         try:
             elevator = Elevator.objects.get(
             elevator_system__id=sys, elevator_number=pk
@@ -79,7 +79,7 @@ class MaintenanceViewSet(viewsets.ViewSet):
 
 class ElevatorDoorViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["patch"])
-    def open_close_door(self, request, pk=None):
+    def open_close_door(self, request,sys, pk=None):
         try:
             elevator = Elevator.objects.get(elevator_system__id=sys, elevator_number=pk )
         except Elevator.DoesNotExist:
@@ -205,19 +205,20 @@ class GetDestination(APIView):
     Fetch the next destination floor for a given elevator
     '''
     def get(self, request,id,pk):
-        system_id = id
-        elevator_number = pk
-
         elevator_object = Elevator.objects.filter(
-        elevator_system__id = system_id,
-        elevator_number = elevator_number
+        elevator_system__id = id,
+        elevator_number = pk
         )
 
         requests_pending = FloorRequest.objects.filter(
         elevator = elevator_object[0],
         is_active = True,
         ).order_by('request_time')
-        return Response(FloorRequestSerializer(requests_pending))
+        return_dict = {
+        'destination' : str(requests_pending[0].destination_floor),
+        'requested' : str(requests_pending[0].requested_floor)
+      }
+        return Response(return_dict)
 
 
 # functions
