@@ -1,6 +1,7 @@
-#Elevator-problem
+# Elevator-problem
+
 The elevator system is built completely from the user perspective. There are elevator systems(Equivalent to buildings) that contains some elevators. Now some user comes in and makes a request to an elevator. The elevator automatically moves UP/DOWN as per the request of the user.The elevator's algorithm to process the requests can be optimized further. The status of an elevator like it is currently operational or not can be updated using API calls.
-##Assumptions:
+## Assumptions:
 Number of elevators in the system will be defined by the API to intialise the elevator system
 Elevator System has got only one button per floor.
 So if there are a total of 5 floors, there will be 5 buttons per floor.
@@ -91,8 +92,6 @@ operational	  - boolean (Is operational)
 door	    - "open" or "close"
 status	  - "moving_up","moving_down" or "idle"
 elevator_system   - required integer (Elevator system)
-```
-#### Response Example
 ```
 #### Response Example
 ```
