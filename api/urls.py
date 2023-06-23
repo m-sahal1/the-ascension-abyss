@@ -4,12 +4,13 @@ from .views import *
 
 
 urlpatterns = [
+    path("", getOverview, name="get-overview" ),
     # View all the elevator systems
-    path("sys/all", ElevatorSystemList.as_view(), name="el-sys-list"),
+    path("system/all", ElevatorSystemList.as_view(), name="system-list"),
     # Create new elevator systems
-    path("sys/add-new/", CreateElevatorSystem.as_view(), name="add-new-els"),
+    path("system/add-new/", CreateElevatorSystem.as_view(), name="add-els"),
     # List all the elevators under an elevator system
-    path("elevator/<int:id>/", ElevatorsList.as_view(), name="elevator-list"),
+    path("system/<int:id>/", ElevatorsList.as_view(), name="elevator-list"),
     # single elevator
     # view
     path(
@@ -23,12 +24,13 @@ urlpatterns = [
         UpdateSingleElevator.as_view(),
         name="elevator-update",
     ),
-    # Fetch destination
+    # Get destination
     path(
         "system/<int:id>/elevator/<int:pk>/destination/",
-        FetchDestination.as_view(),
+        GetDestination.as_view(),
         name="fetch-destination",
     ),
+
     # Request to an elevator
     # create
     path(
