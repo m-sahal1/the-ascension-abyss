@@ -7,9 +7,10 @@ from .serializers import (
     ElevatorSerializer,
     FloorRequestSerializer,
     InitializeElevatorSystemSerializer,
-    FloorRequestSerializerAll
+    FloorRequestSerializerAll,
 )
 from .models import Elevator, FloorRequest, ElevatorSystem
+
 
 # API endpoint to get an overview of available API URLs
 @api_view(["GET"])
@@ -26,8 +27,8 @@ def getOverview(request):
         "single elevator: fetch destination": "api/system/<int:id>/elevator/<int:pk>/destination/",
         "Request to an elevator: create": "api/system/<int:id>/elevator/<int:pk>/req/add-new/",
         "Request to an elevator: view": "api/system/<int:id>/elevator/<int:pk>/req/view/",
-        "Mark an elevator for maintenance":"api/system/<int:sys>/elevator/<int:pk>/maintenance/",
-        "Open/Close doors of an elevator":"api/system/<int:sys>/elevator/<int:pk>/doors/"
+        "Mark an elevator for maintenance": "api/system/<int:sys>/elevator/<int:pk>/maintenance/",
+        "Open/Close doors of an elevator": "api/system/<int:sys>/elevator/<int:pk>/doors/",
     }
     return Response(api_urls)
 
@@ -63,9 +64,7 @@ class MaintenanceViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["patch"])
     def mark_elevator_maintenance(self, request, sys, pk):
         try:
-            elevator = Elevator.objects.get(
-            elevator_system__id=sys, elevator_number=pk
-        )
+            elevator = Elevator.objects.get(elevator_system__id=sys, elevator_number=pk)
         except Elevator.DoesNotExist:
             return Response({"message": "Elevator not found"}, status=404)
 
@@ -79,9 +78,9 @@ class MaintenanceViewSet(viewsets.ViewSet):
 
 class ElevatorDoorViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["patch"])
-    def open_close_door(self, request,sys, pk=None):
+    def open_close_door(self, request, sys, pk=None):
         try:
-            elevator = Elevator.objects.get(elevator_system__id=sys, elevator_number=pk )
+            elevator = Elevator.objects.get(elevator_system__id=sys, elevator_number=pk)
         except Elevator.DoesNotExist:
             return Response({"message": "Elevator not found"}, status=404)
 
@@ -89,11 +88,11 @@ class ElevatorDoorViewSet(viewsets.ViewSet):
         if elevator.status == "moving_up" or elevator.status == "moving_down":
             return Response({"message": "Can't open doors when elevator is moving"})
         # Update the door status
-        else:
-            elevator.door = request.data.get("door")
-            elevator.save()
-            serializer = ElevatorSerializer(elevator)
-            return Response({"message": f"Door status changed to {elevator.door}"})
+        
+        elevator.door = request.data.get("door")
+        elevator.save()
+        serializer = ElevatorSerializer(elevator)
+        return Response({"message": f"Door status changed to {elevator.door}"})
 
 
 class ElevatorsList(generics.ListAPIView):
@@ -105,7 +104,9 @@ class ElevatorsList(generics.ListAPIView):
 
     def get_queryset(self):
         system_id = self.kwargs["id"]
-        queryset = Elevator.objects.filter(elevator_system__id=system_id) #querying upwards to parent with double-underscore
+        queryset = Elevator.objects.filter(
+            elevator_system__id=system_id
+        )  # querying upwards to parent with double-underscore
 
         return queryset
 
@@ -201,23 +202,31 @@ class ElevatorRequestList(generics.ListAPIView):
 
 
 class GetDestination(APIView):
-    '''
+    """
     Fetch the next destination floor for a given elevator
-    '''
-    def get(self, request,id,pk):
+    """
+
+    def get(self, request, id, pk):
+        try:
+            elevator = Elevator.objects.get(elevator_system__id=id, elevator_number=pk)
+        except Elevator.DoesNotExist:
+            return Response({"message": "Elevator not found"}, status=404)
+        # check if the elevator is running or not
+        if elevator.operational == False:
+            return Response({"message": "Elevator Out-of-Service"}, status=404)
+
         elevator_object = Elevator.objects.filter(
-        elevator_system__id = id,
-        elevator_number = pk
+            elevator_system__id=id, elevator_number=pk
         )
 
         requests_pending = FloorRequest.objects.filter(
-        elevator = elevator_object[0],
-        is_active = True,
-        ).order_by('request_time')
+            elevator=elevator_object[0],
+            is_active=True,
+        ).order_by("request_time")
         return_dict = {
-        'destination' : str(requests_pending[0].destination_floor),
-        'requested' : str(requests_pending[0].requested_floor)
-      }
+            "destination": str(requests_pending[0].destination_floor),
+            "requested": str(requests_pending[0].requested_floor),
+        }
         return Response(return_dict)
 
 
@@ -229,7 +238,7 @@ def create_elevators(total_elevators: int, sysId: int):
     an elevator system is created
     """
 
-    for i in range(1,total_elevators):
+    for i in range(1, total_elevators):
         elevator_object = Elevator.objects.create(
             elevator_system_id=sysId,
             elevator_number=i + 1,
