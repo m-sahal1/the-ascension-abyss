@@ -1,36 +1,44 @@
 from django.db import models
 
+# from .serializers import total_elevators, total_floors
+
+
+class ElevatorSystem(models.Model):
+    building_name = models.CharField(max_length=50)
+    total_floors = models.PositiveIntegerField()
+    total_elevators = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.building_name} : \n Floors: {self.total_floors} \n Elevators: {self.total_elevators}"
+
+
 class Elevator(models.Model):
     STATUS_CHOICES = (
         ("idle", "Idle"),
         ("moving_up", "Moving Up"),
         ("moving_down", "Moving Down"),
-        ("stopped", "Stopped"),
     )
     DOOR_STATUS = (("open", "Door is Open"), ("close", "Door is Closed"))
 
-    # the elevator can be idle and open/close or it can be occupied and open/close
+    #the elevator id is primary key and django auto increments it and does not start it 
+    # from 1 for each time a new system is initialised, so we use elevator_number for our needs 
+    elevator_number = models.IntegerField()
+    elevator_system=models.ForeignKey("ElevatorSystem", on_delete=models.CASCADE)
     operational = models.BooleanField(default=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="idle")
     current_floor = models.PositiveIntegerField(default=0)
-    destination_floor = models.PositiveIntegerField(null=True)
     door = models.CharField(max_length=5, choices=DOOR_STATUS, default="close")
-    requests = models.ManyToManyField(
-        "FloorRequest", blank=True
-    )  # , null=True , on_delete=models.SET_NULL)
 
     def __str__(self):
         return f"Elevator {self.pk}"
 
 
 class FloorRequest(models.Model):
-    # DIRECTION_CHOICES = (
-    #     ('up', 'Up'),
-    #     ('down', 'Down'),
-    # )
 
-    floor = models.PositiveIntegerField()  # the floor on which user is on
-    # direction = models.CharField(max_length=10, choices=DIRECTION_CHOICES)
-
+    elevator = models.ForeignKey(Elevator, on_delete=models.CASCADE)
+    requested_floor = models.PositiveSmallIntegerField()
+    destination_floor = models.PositiveSmallIntegerField()
+    request_time = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
     def __str__(self):
-        return f"Request: Floor {self.floor}"
+        return f"{self.elevator} is Requested: Floor {self.requested_floor}"
