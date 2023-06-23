@@ -2,6 +2,7 @@ from rest_framework import generics, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, action
 from rest_framework.views import APIView
+from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import (
     ElevatorSerializer,
     FloorRequestSerializer,
@@ -9,7 +10,6 @@ from .serializers import (
     FloorRequestSerializerAll
 )
 from .models import Elevator, FloorRequest, ElevatorSystem
-from django_filters.rest_framework import DjangoFilterBackend
 
 # API endpoint to get an overview of available API URLs
 @api_view(["GET"])
@@ -18,14 +18,16 @@ def getOverview(request):
     Returns a dictionary containing the available API URLs.
     """
     api_urls = {
-        "View all elevators": "/all",
-        "Initialise_the_elevator_system": "/init",
-        "Fetch all requests for the given elevator": "/requests/<elevator-id>",
-        "Fetch the next destination floor for an elevator": "next-destination/<elevator-id>",
-        "Fetch the direction of elevator": "status/<elevator-id>",
-        "Save user request for the elevator": "add-requests/",
-        "Open/Close the door of the elevator": "door/<elevator-id>",
-        "Mark an elevator as not-working/in-maintenance": "maintenance/<elevator-id>",
+        "View all elevator systems": "system/all",
+        "Initialise_the new_elevator_system": "system/add-new/",
+        "List all the elevators under an elevator system": "system/<int:id>/",
+        "single elevator: view": "system/<int:id>/elevator/<int:pk>/view/",
+        "single elevator: update": "system/<int:id>/elevator/<int:pk>/update/",
+        "single elevator: fetch destination": "system/<int:id>/elevator/<int:pk>/destination/",
+        "Request to an elevator: create": "system/<int:id>/elevator/<int:pk>/req/add-new/",
+        "Request to an elevator: view": "system/<int:id>/elevator/<int:pk>/req/view/",
+        "Mark an elevator for maintenance":"system/<int:sys>/elevator/<int:pk>/maintenance/",
+        "Open/Close doors of an elevator":"system/<int:sys>/elevator/<int:pk>/doors/"
     }
     return Response(api_urls)
 
@@ -52,8 +54,8 @@ class CreateElevatorSystem(generics.CreateAPIView):
 
         # Creating elevators needed for the system. For more details check create_elevators.py
         create_elevators(
-            number_of_elevators=serializer.data["total_floors"],
-            system_id=serializer.data["id"],
+            total_elevators=serializer.data["total_floors"],
+            sysId=serializer.data["id"],
         )
 
 
@@ -61,7 +63,9 @@ class MaintenanceViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["patch"])
     def mark_elevator_maintenance(self, request, pk=None):
         try:
-            elevator = Elevator.objects.get(id=pk)
+            elevator = Elevator.objects.get(
+            elevator_system__id=sys, elevator_number=pk
+        )
         except Elevator.DoesNotExist:
             return Response({"message": "Elevator not found"}, status=404)
 
@@ -77,7 +81,7 @@ class ElevatorDoorViewSet(viewsets.ViewSet):
     @action(detail=True, methods=["patch"])
     def open_close_door(self, request, pk=None):
         try:
-            elevator = Elevator.objects.get(id=pk)
+            elevator = Elevator.objects.get(elevator_system__id=sys, elevator_number=pk )
         except Elevator.DoesNotExist:
             return Response({"message": "Elevator not found"}, status=404)
 
@@ -101,7 +105,7 @@ class ElevatorsList(generics.ListAPIView):
 
     def get_queryset(self):
         system_id = self.kwargs["id"]
-        queryset = Elevator.objects.filter(elevator_system__id=system_id)
+        queryset = Elevator.objects.filter(elevator_system__id=system_id) #querying upwards to parent with double-underscore
 
         return queryset
 

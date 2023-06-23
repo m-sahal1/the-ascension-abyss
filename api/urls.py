@@ -11,7 +11,7 @@ urlpatterns = [
     path("system/add-new/", CreateElevatorSystem.as_view(), name="add-els"),
     # List all the elevators under an elevator system
     path("system/<int:id>/", ElevatorsList.as_view(), name="elevator-list"),
-    # single elevator
+    # when dealing with single elevator
     # view
     path(
         "system/<int:id>/elevator/<int:pk>/view/",
@@ -29,6 +29,19 @@ urlpatterns = [
         "system/<int:id>/elevator/<int:pk>/destination/",
         GetDestination.as_view(),
         name="fetch-destination",
+    ),
+    #mark for maintenance
+    path(
+        "system/<int:sys>/elevator/<int:pk>/maintenance/",
+        MaintenanceViewSet.as_view({'patch': 'mark_elevator_maintenance'}),
+        name="maintenance",
+    ),
+
+    #open/close doors
+    path(
+        "system/<int:sys>/elevator/<int:pk>/doors/",
+        ElevatorDoorViewSet.as_view({'patch': 'open_close_door'}),
+        name="change-doors",
     ),
 
     # Request to an elevator
